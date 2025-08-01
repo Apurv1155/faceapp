@@ -1,4 +1,4 @@
-name: Android APK Build
+name: Build Android APK
 
 on:
   push:
@@ -9,13 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Buildozer & p4a
+      - name: Cache Buildozer and python-for-android
         uses: actions/cache@v3
         with:
           path: |
@@ -26,7 +25,8 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential libssl-dev libffi-dev curl unzip git
+          sudo apt install -y openjdk-8-jdk build-essential python3-pip git unzip curl \
+            autoconf automake libtool pkg-config gettext autopoint libffi-dev libssl-dev zlib1g-dev
 
       - name: Download Haar Cascade
         run: |
@@ -40,17 +40,17 @@ jobs:
         with:
           python-version: 3.10
 
-      - name: Install pip requirements
+      - name: Install buildozer and cython
         run: |
           pip install --upgrade pip
-          pip install buildozer
+          pip install buildozer cython
 
       - name: Build APK (debug)
         run: |
-          buildozer --verbose android debug
+          yes y | buildozer -v android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
           name: FaceApp-debug.apk
-          path: bin/*.apk
+          path: ./bin/*.apk
