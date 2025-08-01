@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Android APK Build
 
 on:
   push:
@@ -9,9 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Cache Buildozer & p4a
@@ -25,29 +26,31 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential libssl-dev libffi-dev curl unzip
+          sudo apt install -y build-essential libssl-dev libffi-dev curl unzip git
 
       - name: Download Haar Cascade
         run: |
           mkdir -p data
-          curl -sSfL https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml \
+          curl -sSfL \
+            https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml \
             -o data/haarcascade_frontalface_default.xml
 
-      - name: Set up Python 3.10
+      - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: 3.10
 
-      - name: Build APK with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          workdir: .
-          buildozer_version: stable
-          command: buildozer android debug
+      - name: Install pip requirements
+        run: |
+          pip install --upgrade pip
+          pip install buildozer
+
+      - name: Build APK (debug)
+        run: |
+          buildozer --verbose android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
           name: FaceApp-debug.apk
-          path: ./bin/FaceApp-0.1-debug.apk
+          path: bin/*.apk
